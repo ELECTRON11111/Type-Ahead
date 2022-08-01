@@ -10,13 +10,56 @@
   <form class="search-form">
     <input type="text" class="search" placeholder="City or State">
     <ul class="suggestions">
-      <li>Filter for a city</li>
-      <li>or a state</li>
     </ul>
   </form>
 <script>
 const endpoint = 'https://gist.githubusercontent.com/Miserlou/c5cd8364bf9b2420bb29/raw/2bf258763cdddd704f8ffd3ea9a3e81d25e2c6f6/cities.json';
+const cities = [];
+// After fetching this this data the computer does not know what type of data we're fetching, so instead,
+// It returns a Promise, we call a .then() on that promise to control what is done with that data.
+// SO we specify the data is json by saying .json(), this returns another promise.
+fetch(endpoint)
+  .then(blob => blob.json())
+  .then(data => cities.push(...data))
+  .catch(error => console.log(error));
+// ...(spread operator) spreads all the data's content into the cities array; 
 
+function findMatches(wordTOMatch,cities){
+  return cities.filter(place => {
+    // here we need to figure out if the city or state matches what was searched.
+    // g -> searches through the global string for the word to match
+    // i -> case insensitive.
+    const regex = new RegExp(wordTOMatch, 'gi');
+    // Return the cities and states that match the regular Expressions
+    return place.city.match(regex) || place.state.match(regex);
+
+  });
+};
+
+const searchInput = document.querySelector('.search');
+const suggestions = document.querySelector('.suggestions');
+
+function displayMatches(){
+  const matchArray = findMatches(this.value,cities);
+  const html = matchArray.map(place => {
+    const rgx = new RegExp(this.value, 'gi');
+    // console.log(rgx);
+    const cityName = place.city.replace(rgx, `<span class="hl">${this.value}</span>`);
+    const stateName = place.state.replace(rgx, `<span class="hl">${this.value}</span>`);
+    return `
+      <li>
+        <span class='name'>${cityName}, ${stateName}</span>
+        <span class='population'>${place.population}</span>
+      </li>
+    `;
+  }).join('');
+  suggestions.innerHTML = html;
+}
+
+// change event is trggered when there's a change in an input.
+searchInput.addEventListener('change', displayMatches);
+// Keyup event is when a key is pressed in an input
+searchInput.addEventListener('keyup', displayMatches);
 </script>
 </body>
 </html>
